@@ -2,6 +2,7 @@ package kr.jdbc.service;
 
 import static kr.jdbc.common.connection.ConnectionConst.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.SQLException;
@@ -55,6 +56,27 @@ class MemberServiceV1Test {
         Member findMemberB = memberRepository.findById(MEMBER_B);
         assertThat(findMemberA.getMoney()).isEqualTo(5_000);
         assertThat(findMemberB.getMoney()).isEqualTo(15_000);
+    }
+
+    @Test
+    @DisplayName("이체중 예외 발생")
+    void accountTransferEx() throws SQLException {
+        // given
+        Member memberA = new Member(MEMBER_A, 10_000);
+        Member memberEx = new Member(MEMBER_EX, 10_000);
+        memberRepository.save(memberA);
+        memberRepository.save(memberEx);
+
+        // when
+        assertThatThrownBy(() -> memberService.accountTransfer(MEMBER_A, MEMBER_EX, 2_000))
+                .isInstanceOf(IllegalStateException.class);
+
+        // then
+        Member findMemberA = memberRepository.findById(MEMBER_A);
+        Member findMemberEx = memberRepository.findById(MEMBER_EX);
+
+        assertThat(findMemberA.getMoney()).isEqualTo(8_000);
+        assertThat(findMemberEx.getMoney()).isEqualTo(10_000);
     }
 
 
